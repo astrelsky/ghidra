@@ -535,12 +535,3 @@ task buildGhidra() {
 	dependsOn createInstallationZip
 
 }
-
-task quickBuild() {
-	apply from: "gradle/support/ip.gradle"
-	ip.enabled = false
-	rootProject.tasks.createJavadocs.enabled = false
-	rootProject.tasks.createJsondocs.enabled = false
-	rootProject.tasks.zipJavadocs.enabled = false
-}
-buildGhidra.mustRunAfter quickBuild
