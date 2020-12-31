@@ -850,8 +850,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 	
 		groupTargetIndex++;
 
-		actionToggleAutoRecord = new ToggleActionBuilder("&Record Automatically", plugin.getName())
-			.menuPath("&Record Automatically")
+		actionToggleAutoRecord = new ToggleActionBuilder("&DBRecord Automatically", plugin.getName())
+			.menuPath("&DBRecord Automatically")
 			.menuGroup(DebuggerResources.GROUP_TARGET, "M" + groupTargetIndex)
 			.helpLocation(new HelpLocation(plugin.getName(), "record_automatically"))
 			.onAction(ctx -> performToggleAutoRecord(ctx))
@@ -1003,10 +1003,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 		
 		new ActionBuilder("Start Recording", plugin.getName())
 			.keyBinding("R")
-			.menuPath("&Record")
+			.menuPath("&DBRecord")
 			.menuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.menuIcon(AbstractRecordAction.ICON)
-			.popupMenuPath("&Record")
+			.popupMenuPath("&DBRecord")
 			.popupMenuGroup(DebuggerResources.GROUP_TARGET, "T" + groupTargetIndex)
 			.popupMenuIcon(AbstractRecordAction.ICON)
 			.helpLocation(new HelpLocation(plugin.getName(), "record"))
@@ -1383,7 +1383,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 				TargetProcess<?> valid = DebugModelConventions.liveProcessOrNull(process);
 				if (valid != null) {
 					startRecording(valid, true).exceptionally(ex -> {
-						Msg.showError(this, null, "Record",
+						Msg.showError(this, null, "DBRecord",
 							"Could not record and/or open target: " + valid, ex);
 						return null;
 					});
@@ -1394,7 +1394,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter implements
 			TargetProcess<?> valid = DebugModelConventions.liveProcessOrNull(obj);
 			if (valid != null) {
 				startRecording(valid, true).exceptionally(ex -> {
-					Msg.showError(this, null, "Record",
+					Msg.showError(this, null, "DBRecord",
 						"Could not record and/or open target: " + valid, ex);
 					return null;
 				});

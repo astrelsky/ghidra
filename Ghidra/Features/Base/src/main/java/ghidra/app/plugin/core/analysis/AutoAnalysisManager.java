@@ -112,7 +112,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	private boolean backgroundAnalysisPending = false;
 	private Thread analysisThread;
 	private AnalysisTaskWrapper activeTask;
-	private Stack<AnalysisTaskWrapper> yieldedTasks = new Stack<>();
+	private Stack<AnalysisTaskWrapper> myYieldedTasks = new Stack<>();
 
 	/**
 	 * This variable is a poorly defined concept.  Essentially, this value is <b>intended</b> to
@@ -481,16 +481,16 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * Yield to all queued auto-analysis tasks of a higher priority (i.e., priority value less than the
 	 * current analysis task priority value).  Must be careful to avoid recursive
 	 * analysis scenarios which could cause stack overflows.   A limitPriority value of null is treated
-	 * as special (used by GhidraScript worker) and will yield to all pending analysis.
+	 * as special (used by GhidraScript worker) and will myYield to all pending analysis.
 	 * NOTE: method may only be invoked within the analysis thread
 	 * (i.e., by an Analyzer or AnalysisWorker).  Care must be taken to control depth
-	 * of yield, although this may be difficult to control.
+	 * of myYield, although this may be difficult to control.
 	 * @param monitor
 	 */
-	private void yield(Integer limitPriority, TaskMonitor monitor) {
+	private void myYield(Integer limitPriority, TaskMonitor monitor) {
 
 		if (limitPriority != null && limitPriority == 0) {
-			// Handle special priority value 0 special and yield
+			// Handle special priority value 0 special and myYield
 			// to all pending analysis - this is the case for
 			// scripts running within the analysis thread
 			limitPriority = Integer.MAX_VALUE;
@@ -508,14 +508,14 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	/**
 	 * Allows all queued auto-analysis tasks with a priory value less than the specified
 	 * limitPriority (lower values are considered to be a higher-priority) to complete.
-	 * Any previously yielded tasks will remain in a yielded state.
+	 * Any previously myYielded tasks will remain in a myYielded state.
 	 * NOTE: This method should generally only be used by GhidraScripts.  Using this method
 	 * is not recommended for Analyzers or their subordinate threads.  Invoking this method
 	 * from a Analyzer subordinate thread will likely produce a deadlock situation.
 	 * @param limitPriority property limit threshold - all tasks with a lower priority value
 	 * (i.e., lower values correspond to higher priority) will be permitted to run.  A value
 	 * of null will allow all pending analysis to complete (excluding any tasks which had
-	 * previously yielded).
+	 * previously myYielded).
 	 * @param monitor
 	 * @throws IllegalStateException if not invoked from the analysis thread.
 	 */
@@ -573,11 +573,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			throw new AssertException();
 		}
 
-		// temporarily alter active task priority during yield processing
+		// temporarily alter active task priority during myYield processing
 		Integer originalPriority = activeTask.taskPriority;
 		activeTask.taskPriority = limitPriority;
 		try {
-			yield(limitPriority, monitor);
+			myYield(limitPriority, monitor);
 		}
 		finally {
 			activeTask.taskPriority = originalPriority;
@@ -620,10 +620,10 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	/**
 	 * Start auto-analysis in the current thread if it is ENABLED and not yet running.
 	 * WARNING! If auto analysis is actively running or is DISABLED/SUSPENDED, this method will return immediately.
-	 * NOTE: If invoked directly or indirectly by an Analyzer a yield will be
+	 * NOTE: If invoked directly or indirectly by an Analyzer a myYield will be
 	 * performed in which all queued tasks of a higher priority (smaller priority value) than the current
 	 * task will be executed prior to this method returning.  AnalysisWorker's should use the
-	 * yield method so that their limit-priority may be established during the yield.
+	 * myYield method so that their limit-priority may be established during the myYield.
 	 * <br>
 	 * If analysis is performed, a summary of task execution times will be printed to the log.
 	 * @param monitor
@@ -638,24 +638,24 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	/**
 	 * Start auto-analysis in the current thread if it is ENABLED and not yet running.
 	 * WARNING! If auto analysis is actively running or is DISABLED/SUSPENDED, this method will return immediately.
-	 * NOTE: If invoked directly or indirectly by an Analyzer a yield will be
+	 * NOTE: If invoked directly or indirectly by an Analyzer a myYield will be
 	 * performed in which all queued tasks of a higher priority (smaller priority value) than the current
 	 * task will be executed prior to this method returning.  AnalysisWorker's should use the
-	 * yield method so that their limit-priority may be established during the yield.
+	 * myYield method so that their limit-priority may be established during the myYield.
 	 * @param monitor
 	 * @param printTaskTimes if true and analysis is performed, a summary of task execution times
 	 * will be printed to the log.
 	 */
 	public void startAnalysis(TaskMonitor monitor, boolean printTaskTimes) {
 		if (Thread.currentThread() == analysisThread) {
-			// TODO: should this yield for analysis?
+			// TODO: should this myYield for analysis?
 			//    Thinking was that if some analysis causes disassembly to occur,
 			//    then that disassembly and it's analysis will keep other analysis out of trouble.
 			//    However for single threaded, this might not be worthwhile in the long run.
-			yield(activeTask.taskPriority, monitor);
+			myYield(activeTask.taskPriority, monitor);
 		}
 		else if (analysisThread != null || !isEnabled) {
-			// this could be a sub-thread of a task, don't yield, or flush domain objects
+			// this could be a sub-thread of a task, don't myYield, or flush domain objects
 			return;
 		}
 		else {
@@ -723,7 +723,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	/**
 	 * Start auto-analysis if it is ENABLED and not yet running.
 	 * @param monitor
-	 * @param yield if true the current thread is the analysis thread and is yielding to the currently
+	 * @param myYield if true the current thread is the analysis thread and is myYielding to the currently
 	 * executing task.
 	 * @param limitPriority the threshold priority value.  All queued tasks with a priority value
 	 * less than limitPriority (i.e., higher priority) will be executed prior to this method returning.
@@ -731,7 +731,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * @param printTaskTimes if true and analysis is performed, a summary of task execution times
 	 * will be printed to the log.
 	 */
-	private void startAnalysis(TaskMonitor monitor, boolean yield, Integer limitPriority,
+	private void startAnalysis(TaskMonitor monitor, boolean myYield, Integer limitPriority,
 			boolean printTaskTimes) {
 
 		// the program may have been closed before while this thread was waiting
@@ -744,13 +744,13 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		synchronized (this) {
 			try {
 				/**
-				 * If invoked from an analysis task, treat as a yield and allow
+				 * If invoked from an analysis task, treat as a myYield and allow
 				 * task queue to be processed.
 				 */
-				if (!yield && (!isEnabled || analysisThread != null)) {
+				if (!myYield && (!isEnabled || analysisThread != null)) {
 					return;
 				}
-				if (yield) {
+				if (myYield) {
 					if (activeTask == null) {
 						throw new AssertException("Expected active analysis task");
 					}
@@ -762,9 +762,9 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				if (analysisThread == null) {
 					analysisThread = Thread.currentThread();
 				}
-				if (yield) {
+				if (myYield) {
 					activeTask.pauseTimer();
-					yieldedTasks.push(activeTask);
+					myYieldedTasks.push(activeTask);
 				}
 				activeTask = task;
 			}
@@ -790,7 +790,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				synchronized (this) {
 					activeTask = getNextTask(limitPriority, monitor);
 					if (activeTask == null) {
-						if (!yield) {
+						if (!myYield) {
 							analysisThread = null;
 						}
 						break;
@@ -798,7 +798,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				}
 			}
 
-			if (!yield) {
+			if (!myYield) {
 				notifyAnalysisEnded();
 				if (printTaskTimes) {
 					printTimedTasks();
@@ -808,8 +808,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 		finally {
 			synchronized (this) {
-				if (yield) {
-					activeTask = yieldedTasks.pop();
+				if (myYield) {
+					activeTask = myYieldedTasks.pop();
 					activeTask.resumeTimer();
 				}
 				else {
@@ -817,7 +817,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					analysisThread = null;
 					activeTask = null;
 					protectedLocations = new AddressSet();
-					yieldedTasks.clear();
+					myYieldedTasks.clear();
 				}
 			}
 		}
@@ -1310,7 +1310,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	 * run at the highest priority (reserved priority value of 0).  Within headed environments when analyzeChanges
 	 * is false, a modal task dialog will be displayed while the callback is active to prevent the
 	 * user from initiating additional program changes.  If this worker invokes startAnalysis, it will
-	 * yield to ALL pending analysis.
+	 * myYield to ALL pending analysis.
 	 * <p>Known Limitations:
 	 * <ul>
 	 * <li>If ad-hoc background threads are making program changes, their associated

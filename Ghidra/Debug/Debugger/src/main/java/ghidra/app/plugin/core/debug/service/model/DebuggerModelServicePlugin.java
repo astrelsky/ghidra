@@ -540,7 +540,7 @@ public class DebuggerModelServicePlugin extends Plugin
 		TraceRecorder recorder = mapper.startRecording(this, trace);
 		trace.release(this); // The recorder now owns it (on behalf of the service)
 		recorder.init().exceptionally(e -> {
-			Msg.showError(this, null, "Record Trace", "Error initializing recorder", e);
+			Msg.showError(this, null, "DBRecord Trace", "Error initializing recorder", e);
 			return null;
 		});
 		return recorder;

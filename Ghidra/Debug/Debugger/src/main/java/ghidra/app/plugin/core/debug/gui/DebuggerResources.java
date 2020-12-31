@@ -580,12 +580,12 @@ public interface DebuggerResources {
 	}
 
 	abstract class AbstractRecordAction extends DockingAction {
-		public static final String NAME = "Record";
+		public static final String NAME = "DBRecord";
 		public static final Icon ICON = ICON_TRACE;
 
 		public AbstractRecordAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Record the process into a trace and open it (live trace)");
+			setDescription("DBRecord the process into a trace and open it (live trace)");
 			setHelpLocation(new HelpLocation(owner.getName(), "record"));
 		}
 	}
