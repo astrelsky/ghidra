@@ -25,10 +25,15 @@
 #ifndef __MYTYPES__
 #define __MYTYPES__
 
-#include <cstdint>
+#include <limits.h>
+#include <stdint.h>
 
 typedef size_t uintm;
-typedef ssize_t intm;
+#if INT64_MAX == LONG_MAX
+typedef long intm;
+#else
+typedef int intm;
+#endif
 typedef uint64_t uint8;
 typedef int64_t int8;
 typedef uint32_t uint4;
