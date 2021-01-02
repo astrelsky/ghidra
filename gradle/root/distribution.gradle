@@ -193,6 +193,8 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Newer versions of gradle set this to true by default.
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)
+	
+	options.setDocTitle(null)
 
 	// Some internal packages are not public and need to be exported.
     options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt.image=ALL-UNNAMED",

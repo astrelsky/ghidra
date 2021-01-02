@@ -63,7 +63,12 @@ abstract class PointerDBAdapter {
 			return new PointerDBAdapterV1(handle);
 		}
 		catch (VersionException e) {
-			return new PointerDBAdapterV0(handle);
+			try {
+				return new PointerDBAdapterV2(handle);
+			}
+			catch (VersionException e2) {
+				return new PointerDBAdapterV0(handle);
+			}
 		}
 	}
 

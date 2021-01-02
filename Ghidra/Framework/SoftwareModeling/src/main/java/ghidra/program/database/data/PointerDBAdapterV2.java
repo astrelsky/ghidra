@@ -15,13 +15,19 @@
  */
 package ghidra.program.database.data;
 
+import ghidra.util.exception.VersionException;
+
 import java.io.IOException;
 
 import db.*;
-import ghidra.util.exception.VersionException;
 
 class PointerDBAdapterV2 extends PointerDBAdapter {
+	final static int DOWNGRADE_VERSION = 3;
 	final static int VERSION = 2;
+	
+	static final Schema OLD_SCHEMA = new Schema(DOWNGRADE_VERSION, "Pointer ID", new Class[] {
+		LongField.class, LongField.class, ByteField.class, IntField.class },
+		new String[] { "Data Type ID", "Category ID", "Length", "Shift Offset" });
 
 	private Table table;
 
@@ -37,11 +43,26 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 			}
 			else if (table.getSchema().getVersion() != VERSION) {
 				int version = table.getSchema().getVersion();
-				if (version < VERSION) {
+				if (version < VERSION || table.getSchema().equals(OLD_SCHEMA)) {
 					throw new VersionException(true);
 				}
 				throw new VersionException(VersionException.NEWER_VERSION, false);
 			}
+		}
+	}
+
+	PointerDBAdapterV2(DBHandle handle) throws VersionException {
+
+		table = handle.getTable(POINTER_TABLE_NAME);
+		if (table == null) {
+			throw new VersionException("Missing Table: " + POINTER_TABLE_NAME);
+		}
+		else if (table.getSchema().getVersion() != VERSION && !table.getSchema().equals(OLD_SCHEMA)) {
+			int version = table.getSchema().getVersion();
+			if (version < VERSION) {
+				throw new VersionException(true);
+			}
+			throw new VersionException(VersionException.NEWER_VERSION, false);
 		}
 	}
 
