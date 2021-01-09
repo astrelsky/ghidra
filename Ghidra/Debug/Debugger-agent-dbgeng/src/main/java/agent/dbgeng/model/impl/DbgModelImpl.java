@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugSessionId;
-import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgSessionImpl;
@@ -27,12 +26,18 @@ import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import agent.dbgeng.model.iface2.DbgModelTargetSessionContainer;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.AnnotatedSchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 
 public class DbgModelImpl extends AbstractDbgModel {
 	// TODO: Need some minimal memory modeling per architecture on the model/agent side.
 	// The model must convert to and from Ghidra's address space names
 	protected static final String SPACE_NAME = "ram";
+
+	protected static final AnnotatedSchemaContext SCHEMA_CTX = new AnnotatedSchemaContext();
+	protected static final TargetObjectSchema ROOT_SCHEMA =
+		SCHEMA_CTX.getSchemaForClass(DbgModelTargetRootImpl.class);
 
 	// Don't make this static, so each model has a unique "GDB" space
 	protected final AddressSpace space =
@@ -48,10 +53,11 @@ public class DbgModelImpl extends AbstractDbgModel {
 
 	public DbgModelImpl() {
 		this.dbg = DbgManager.newInstance();
-		this.root = new DbgModelTargetRootImpl(this);
+		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
+		this.root = new DbgModelTargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
 		DbgSessionImpl s = new DbgSessionImpl((DbgManagerImpl) dbg, new DebugSessionId(0));
-		s.add(Causes.UNCLAIMED);
+		s.add();
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
 	}

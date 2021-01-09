@@ -22,12 +22,14 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
 import ghidra.dbg.attributes.TargetObjectRef;
-import ghidra.dbg.error.DebuggerModelNoSuchPathException;
-import ghidra.dbg.error.DebuggerModelTypeException;
+import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
+import ghidra.util.Msg;
 
 /**
  * A debugger model, often a connection to an external debugger
@@ -166,6 +168,21 @@ public interface DebuggerObjectModel {
 	public boolean isAlive();
 
 	/**
+	 * Get the schema of this model, i.e., the schema of its root object.
+	 * 
+	 * <p>
+	 * The schema may not be known until the model has been successfully opened. Some factories will
+	 * ensure success before providing the model, but this may not always be the case. Callers
+	 * should listen for {@link DebuggerModelListener#modelOpened()} or retrieve the root object
+	 * first.
+	 * 
+	 * @return the root schema
+	 */
+	public default TargetObjectSchema getRootSchema() {
+		return EnumerableTargetObjectSchema.OBJECT;
+	}
+
+	/**
 	 * Check if the debugger agent is alive (optional operation)
 	 * 
 	 * <p>
@@ -203,6 +220,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * Create a reference to the given path in this model
 	 * 
+	 * <p>
 	 * Note that the path is not checked until the object is fetched. Thus, it is possible for a
 	 * reference to refer to a non-existent object.
 	 * 
@@ -221,6 +239,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * Fetch the attributes of a given model path
 	 * 
+	 * <p>
 	 * Giving an empty path will retrieve the attributes of the root object. If the path does not
 	 * exist, the future completes with {@code null}.
 	 * 
@@ -252,6 +271,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * Fetch the elements of a given model path
 	 * 
+	 * <p>
 	 * Giving an empty path will retrieve all the top-level objects, i.e., elements of the root. If
 	 * the path does not exist, the future completes with {@code null}.
 	 * 
@@ -283,6 +303,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * Fetch the root object of the model
 	 * 
+	 * <p>
 	 * The root is a virtual object to contain all the top-level objects of the model tree. This
 	 * object represents the debugger itself.
 	 * 
@@ -292,7 +313,6 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the value at the given path
-	 * 
 	 * 
 	 * @param path the path of the value
 	 * @return a future completing with the value or with {@code null} if the path does not exist
@@ -445,6 +465,7 @@ public interface DebuggerObjectModel {
 	/**
 	 * Invalidate the caches for every object known locally.
 	 * 
+	 * <p>
 	 * Unlike, {@link TargetObject#invalidateCaches()}, this does not push the request to a remote
 	 * object. If the objects are proxies, just the proxies' caches are cleared. Again, this does
 	 * not apply to caches for the objects' children.
@@ -454,10 +475,30 @@ public interface DebuggerObjectModel {
 	/**
 	 * Close the session and dispose the model
 	 * 
+	 * <p>
 	 * For local sessions, terminate the debugger. For client sessions, disconnect.
 	 * 
 	 * @return a future which completes when the session is closed
 	 */
 	public CompletableFuture<Void> close();
 
+	/**
+	 * A convenience for reporting errors conditionally
+	 * 
+	 * <p>
+	 * If the message is ignorable, e.g., a {@link DebuggerModelTerminatingException}, then the
+	 * report will be reduced to a stack-free warning.
+	 * 
+	 * @param origin the object producing the error
+	 * @param message the error message
+	 * @param ex the exception
+	 */
+	default void reportError(Object origin, String message, Throwable ex) {
+		if (ex == null || DebuggerModelTerminatingException.isIgnorable(ex)) {
+			Msg.warn(origin, message + ": " + ex);
+		}
+		else {
+			Msg.error(origin, message, ex);
+		}
+	}
 }

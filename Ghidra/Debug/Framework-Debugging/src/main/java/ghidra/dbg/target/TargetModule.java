@@ -17,10 +17,15 @@ package ghidra.dbg.target;
 
 import ghidra.async.TypeSpec;
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.program.model.address.AddressRange;
 
 /**
- * A binary module loaded by the debugger
+ * A binary module loaded by the target and/or debugger
+ * 
+ * <p>
+ * If the debugger cares to parse the modules for section information, those sections should be
+ * presented as successors to the module.
  */
 @DebuggerTargetObjectIface("Module")
 public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObject<T> {
@@ -34,7 +39,6 @@ public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObje
 	Class<Private.Cls> tclass = (Class) TargetModule.class;
 	TypeSpec<TargetModule<?>> TYPE = TypeSpec.auto();
 
-	String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
 	String RANGE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "range";
 	String MODULE_NAME_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "module_name";
 
@@ -49,6 +53,7 @@ public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObje
 	 * 
 	 * @return the base address, or {@code null}
 	 */
+	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default AddressRange getRange() {
 		return getTypedAttributeNowByName(RANGE_ATTRIBUTE_NAME, AddressRange.class, null);
 	}
@@ -58,6 +63,7 @@ public interface TargetModule<T extends TargetModule<T>> extends TypedTargetObje
 	 * 
 	 * @return the module name
 	 */
+	@TargetAttributeType(name = MODULE_NAME_ATTRIBUTE_NAME, required = true, hidden = true)
 	public default String getModuleName() {
 		return getTypedAttributeNowByName(MODULE_NAME_ATTRIBUTE_NAME, String.class, null);
 	}
