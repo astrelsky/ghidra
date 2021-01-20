@@ -21,7 +21,7 @@ import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
- * Implementation of {@link DbgManagerImpl#enableBreakpoints(long)}
+ * Implementation of {@link DbgManagerImpl#enableBreakpoints(long...)}
  */
 public class DbgEnableBreakpointsCommand extends AbstractDbgCommand<Void> {
 

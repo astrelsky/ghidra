@@ -21,7 +21,7 @@ import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
 /**
- * Implementation of {@link DbgManagerImpl#deleteBreakpoints(long)}
+ * Implementation of {@link DbgManagerImpl#deleteBreakpoints(long......)}
  */
 public class DbgDeleteBreakpointsCommand extends AbstractDbgCommand<Void> {
 

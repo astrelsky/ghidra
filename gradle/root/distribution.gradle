@@ -43,6 +43,18 @@ FileTree javadocFiles = fileTree (rootProject.projectDir.toString()) {
 	exclude '**/src/test/**'
 	exclude '**/src/test.slow/**'
 	//exclude '**/pcodeCPort/**'  // not intended for general consumption
+	include '**/AnnotationValidator/src/main/java/**/*.java'
+	include '**/Debugger/src/main/java/**/*.java'
+	include '**/Debugger-agent-dbgeng/src/main/java/**/*.java'
+	include '**/Debugger-agent-dbgmodel/src/main/java/**/*.java'
+	include '**/Debugger-agent-gdb/src/main/java/**/*.java'
+	include '**/Debugger-gadp/src/main/java/**/*.java'
+	include '**/Debugger-jpda/src/main/java/**/*.java'
+	include '**/Debugger-sctl/src/main/java/**/*.java'
+	include '**/Framework-AsyncComm/src/main/java/**/*.java'
+	include '**/Framework-Debugging/src/main/java/**/*.java'
+	include '**/Framework-TraceModeling/src/main/java/**/*.java'
+	include '**/ProposedUtils/src/main/java/**/*.java'
 }
 ext.ghidraPath = files()
 
@@ -108,7 +120,7 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 
 	destinationDir = file(rootProject.projectDir.toString() + "/build/tmp/javadoc")
 
-	failOnError true
+	failOnError false
 
 	// Here for reference. If we want to turn on javadoc for all source files, uncomment
 	// the following line (and comment out the next one):
