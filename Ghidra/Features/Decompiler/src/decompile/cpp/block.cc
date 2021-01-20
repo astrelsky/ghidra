@@ -3126,6 +3126,79 @@ FlowBlock *BlockWhileDo::nextFlowAfter(const FlowBlock *bl) const
   return nextbl;
 }
 
+/// Determine if \b this block can be printed as a \e for loop, with an \e initializer statement
+/// extracted from the previous block, and an \e iterator statement extracted from the body.
+/// \param data is the function containing \b this loop
+void BlockWhileDo::finalTransform(Funcdata &data)
+
+{
+  BlockGraph::finalTransform(data);
+  if (!data.getArch()->analyze_for_loops) return;
+  if (hasOverflowSyntax()) return;
+  FlowBlock *copyBl = getFrontLeaf();
+  if (copyBl == (FlowBlock *)0) return;
+  BlockBasic *head = (BlockBasic *)copyBl->subBlock(0);
+  if (head->getType() != t_basic) return;
+  PcodeOp *lastOp = getBlock(1)->lastOp();	// There must be a last op in body, for there to be an iterator statement
+  if (lastOp == (PcodeOp *)0) return;
+  BlockBasic *tail = lastOp->getParent();
+  if (tail->sizeOut() != 1) return;
+  if (tail->getOut(0) != head) return;
+  PcodeOp *cbranch = getBlock(0)->lastOp();
+  if (cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH) return;
+  if (lastOp->isBranch()) {			// Convert lastOp to -point- iterateOp must appear after
+    lastOp = lastOp->previousOp();
+    if (lastOp == (PcodeOp *)0) return;
+  }
+
+  findLoopVariable(cbranch, head, tail, lastOp);
+  if (iterateOp == (PcodeOp *)0) return;
+
+  if (iterateOp != lastOp) {
+    data.opUninsert(iterateOp);
+    data.opInsertAfter(iterateOp, lastOp);
+  }
+
+  // Try to set up initializer statement
+  lastOp = findInitializer(head, tail->getOutRevIndex(0));
+  if (lastOp == (PcodeOp *)0) return;
+  if (!initializeOp->isMoveable(lastOp)) {
+    initializeOp = (PcodeOp *)0;		// Turn it off
+    return;
+  }
+  if (initializeOp != lastOp) {
+    data.opUninsert(initializeOp);
+    data.opInsertAfter(initializeOp, lastOp);
+  }
+}
+
+/// Assume that finalTransform() has run and that all HighVariable merging has occurred.
+/// Do any final tests checking that the initialization and iteration statements are good.
+/// Extract initialization and iteration statements from their basic blocks.
+/// \param data is the function containing the loop
+void BlockWhileDo::finalizePrinting(Funcdata &data) const
+
+{
+  BlockGraph::finalizePrinting(data);	// Continue recursing
+  if (iterateOp == (PcodeOp *)0) return;	// For-loop printing not enabled
+  // TODO: We can check that iterate statement is not too complex
+  int4 slot = iterateOp->getParent()->getOutRevIndex(0);
+  iterateOp = testTerminal(data,slot);		// Make sure iterator statement is explicit
+  if (iterateOp == (PcodeOp *)0) return;
+  if (!testIterateForm()) {
+    iterateOp = (PcodeOp *)0;
+    return;
+  }
+  if (initializeOp == (PcodeOp *)0)
+    findInitializer(loopDef->getParent(), slot);	// Last chance initializer
+  if (initializeOp != (PcodeOp *)0)
+    initializeOp = testTerminal(data,1-slot);	// Make sure initializer statement is explicit
+
+  data.opMarkNonPrinting(iterateOp);
+  if (initializeOp != (PcodeOp *)0)
+    data.opMarkNonPrinting(initializeOp);
+}
+
 void BlockDoWhile::markLabelBumpUp(bool bump)
 
 {
