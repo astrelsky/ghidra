@@ -324,33 +324,6 @@ const FlowBlock *FlowBlock::getFrontLeaf(void) const
   return bl;
 }
 
-FlowBlock *FlowBlock::getBackBasicLeaf(void)
-
-{
-  FlowBlock *bl = this;
-
-  if (getType() == FlowBlock::t_basic) return bl; // already at leaf
-  if (getType() == FlowBlock::t_plain) return bl; // has no sub blocks
-
-  // bl must be a BlockGraph or one of its subclasses
-  while (bl->getType() != FlowBlock::t_copy) {
-    BlockGraph * bg = (BlockGraph*)bl;
-
-    if (bg->getSize() == 0) break;
-
-    FlowBlock * newbl = bl->subBlock(bg->getSize()-1);
-
-    // Only descend through list blocks (consider other structures irreducible)
-    if (newbl->getType() != FlowBlock::t_ls && newbl->getType() != FlowBlock::t_copy)
-      return (FlowBlock*)0;
-
-    bl = newbl;
-  }
-
-  return bl;
-}
-
-
 /// Keep descending tree hierarchy, taking the front block,
 /// until we get to the bottom copy block
 /// \return the first leaf FlowBlock to execute
@@ -675,8 +648,6 @@ string FlowBlock::typeToName(FlowBlock::block_type bt)
     return "properif";
   case t_whiledo:
     return "whiledo";
-  case t_for:
-    return "for";
   case t_dowhile:
     return "dowhile";
   case t_switch:
@@ -1170,33 +1141,6 @@ void BlockGraph::forceFalseEdge(const FlowBlock *out0)
   if (outofthis[0].point != out0)
     throw LowlevelError("Unable to preserve condition");
 }
-
-/// The indicated block is pulled out of the component list and edges are removed.
-/// \param bl is the indicated block
-/// \param newparent is the new parent graph
-void BlockGraph::reparent(FlowBlock *bl,BlockGraph *newparent)
-
-{
-#ifdef BLOCKCONSISTENT_DEBUG
-  if ((bl->parent != this)||(bl->parent == newparent))
-    throw LowlevelError("Bad reparent");
-#endif
-
-  vector<FlowBlock *>::iterator iter;
-  while(bl->sizeIn()>0)		// Rip the block out of the graph
-    removeEdge(bl->getIn(0),bl);
-  while(bl->sizeOut()>0)
-    removeEdge(bl,bl->getOut(0));
-
-  for(iter=list.begin();iter!=list.end();++iter)
-    if (*iter == bl) {
-      list.erase(iter);
-      break;
-    }
-
-  newparent->addBlock(bl);
-}
-
 
 /// \param i is the position of the first FlowBlock to swap
 /// \param j is the position of the second
@@ -1821,28 +1765,6 @@ BlockWhileDo *BlockGraph::newBlockWhileDo(FlowBlock *cond,FlowBlock *cl)
   BlockWhileDo *ret = new BlockWhileDo();
   nodes.push_back(cond);
   nodes.push_back(cl);
-  identifyInternal(ret,nodes);
-  addBlock(ret);
-  ret->forceOutputNum(1);
-  return ret;
-}
-
-/// Add the new BlockFor to \b this, collapsing the condition, clause, and an optional initializer list
-/// \param cond is the condition FlowBlock
-/// \param cl is the clause FlowBlock
-/// \param init is the optional initializer FlowBlock
-/// \return the new BlockFor
-BlockFor *BlockGraph::newBlockFor(FlowBlock *cond,FlowBlock *cl,FlowBlock *init)
-
-{
-  vector<FlowBlock *> nodes;
-  BlockFor *ret = new BlockFor();
-  nodes.push_back(cond);
-  nodes.push_back(cl);
-
-  if (init)
-    nodes.push_back(init);
-
   identifyInternal(ret,nodes);
   addBlock(ret);
   ret->forceOutputNum(1);
@@ -3202,79 +3124,6 @@ FlowBlock *BlockWhileDo::nextFlowAfter(const FlowBlock *bl) const
   if (nextbl != (FlowBlock *)0)
     nextbl = nextbl->getFrontLeaf();
   return nextbl;
-}
-
-/// Determine if \b this block can be printed as a \e for loop, with an \e initializer statement
-/// extracted from the previous block, and an \e iterator statement extracted from the body.
-/// \param data is the function containing \b this loop
-void BlockWhileDo::finalTransform(Funcdata &data)
-
-{
-  BlockGraph::finalTransform(data);
-  if (!data.getArch()->analyze_for_loops) return;
-  if (hasOverflowSyntax()) return;
-  FlowBlock *copyBl = getFrontLeaf();
-  if (copyBl == (FlowBlock *)0) return;
-  BlockBasic *head = (BlockBasic *)copyBl->subBlock(0);
-  if (head->getType() != t_basic) return;
-  PcodeOp *lastOp = getBlock(1)->lastOp();	// There must be a last op in body, for there to be an iterator statement
-  if (lastOp == (PcodeOp *)0) return;
-  BlockBasic *tail = lastOp->getParent();
-  if (tail->sizeOut() != 1) return;
-  if (tail->getOut(0) != head) return;
-  PcodeOp *cbranch = getBlock(0)->lastOp();
-  if (cbranch == (PcodeOp *)0 || cbranch->code() != CPUI_CBRANCH) return;
-  if (lastOp->isBranch()) {			// Convert lastOp to -point- iterateOp must appear after
-    lastOp = lastOp->previousOp();
-    if (lastOp == (PcodeOp *)0) return;
-  }
-
-  findLoopVariable(cbranch, head, tail, lastOp);
-  if (iterateOp == (PcodeOp *)0) return;
-
-  if (iterateOp != lastOp) {
-    data.opUninsert(iterateOp);
-    data.opInsertAfter(iterateOp, lastOp);
-  }
-
-  // Try to set up initializer statement
-  lastOp = findInitializer(head, tail->getOutRevIndex(0));
-  if (lastOp == (PcodeOp *)0) return;
-  if (!initializeOp->isMoveable(lastOp)) {
-    initializeOp = (PcodeOp *)0;		// Turn it off
-    return;
-  }
-  if (initializeOp != lastOp) {
-    data.opUninsert(initializeOp);
-    data.opInsertAfter(initializeOp, lastOp);
-  }
-}
-
-/// Assume that finalTransform() has run and that all HighVariable merging has occurred.
-/// Do any final tests checking that the initialization and iteration statements are good.
-/// Extract initialization and iteration statements from their basic blocks.
-/// \param data is the function containing the loop
-void BlockWhileDo::finalizePrinting(Funcdata &data) const
-
-{
-  BlockGraph::finalizePrinting(data);	// Continue recursing
-  if (iterateOp == (PcodeOp *)0) return;	// For-loop printing not enabled
-  // TODO: We can check that iterate statement is not too complex
-  int4 slot = iterateOp->getParent()->getOutRevIndex(0);
-  iterateOp = testTerminal(data,slot);		// Make sure iterator statement is explicit
-  if (iterateOp == (PcodeOp *)0) return;
-  if (!testIterateForm()) {
-    iterateOp = (PcodeOp *)0;
-    return;
-  }
-  if (initializeOp == (PcodeOp *)0)
-    findInitializer(loopDef->getParent(), slot);	// Last chance initializer
-  if (initializeOp != (PcodeOp *)0)
-    initializeOp = testTerminal(data,1-slot);	// Make sure initializer statement is explicit
-
-  data.opMarkNonPrinting(iterateOp);
-  if (initializeOp != (PcodeOp *)0)
-    data.opMarkNonPrinting(initializeOp);
 }
 
 void BlockDoWhile::markLabelBumpUp(bool bump)

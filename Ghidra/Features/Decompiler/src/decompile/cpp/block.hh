@@ -63,7 +63,7 @@ public:
   /// \brief The possible block types
   enum block_type {
     t_plain, t_basic, t_graph, t_copy, t_goto, t_multigoto, t_ls,
-    t_condition, t_if, t_whiledo, t_dowhile, t_switch, t_infloop, t_for
+    t_condition, t_if, t_whiledo, t_dowhile, t_switch, t_infloop
   };
   /// \brief Boolean properties of blocks
   ///
@@ -214,7 +214,6 @@ public:
   int4 getInRevIndex(int4 i) const { return intothis[i].reverse_index; }	///< Get the output index of the i-th input FlowBlock
   const FlowBlock *getFrontLeaf(void) const;				///< Get the first leaf FlowBlock
   FlowBlock *getFrontLeaf(void);					///< Get the first leaf FlowBlock
-  FlowBlock *getBackBasicLeaf(void);			///< Get the last basic or copy leaf FlowBlock
   int4 calcDepth(const FlowBlock *leaf) const;		///< Get the depth of the given component FlowBlock
   bool dominates(const FlowBlock *subBlock) const;	///< Does \b this block dominate the given block
   bool restrictedByConditional(const FlowBlock *cond) const;
@@ -309,7 +308,6 @@ public:
   void switchEdge(FlowBlock *in,FlowBlock *outbefore,FlowBlock *outafter);	///< Move an edge from one out FlowBlock to another
   void moveOutEdge(FlowBlock *blold,int4 slot,FlowBlock *blnew);	///< Move indicated \e out edge to a new FlowBlock
   void removeBlock(FlowBlock *bl);				///< Remove a FlowBlock from \b this BlockGraph
-  void reparent(FlowBlock *bl,BlockGraph *newparent);		///< Migrate an internal block to a new parent
   void removeFromFlow(FlowBlock *bl);				///< Remove given FlowBlock preserving flow in \b this
   void removeFromFlowSplit(FlowBlock *bl,bool flipflow);	///< Remove FlowBlock splitting flow between input and output edges
   void spliceBlock(FlowBlock *bl);		///< Splice given FlowBlock together with its output
@@ -329,7 +327,6 @@ public:
   BlockIf *newBlockIf(FlowBlock *cond,FlowBlock *tc);				///< Build a new BlockIf
   BlockIf *newBlockIfElse(FlowBlock *cond,FlowBlock *tc,FlowBlock *fc);		///< Build a new BlockIfElse
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
-  BlockFor *newBlockFor(FlowBlock *cond,FlowBlock *cl,FlowBlock *init);		///< Build a new BlockFor
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
   BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit);	///< Build a new BlockSwitch
@@ -405,8 +402,6 @@ public:
   list<PcodeOp *>::iterator endOp(void) { return op.end(); }		///< Return an iterator to the end of the PcodeOps
   list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
   list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
-  list<PcodeOp *>::reverse_iterator rbeginOp(void) { return op.rbegin(); }	///< Return a reverse iterator to the end of the PcodeOps
-  list<PcodeOp *>::reverse_iterator rendOp(void) { return op.rend(); }	///< Return a reverse iterator to the beginning of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
   static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
 };
@@ -614,20 +609,6 @@ public:
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalTransform(Funcdata &data);
   virtual void finalizePrinting(Funcdata &data) const;
-};
-
-/// \brief A loop structure with an initializer list, condition block, and post-body block statement
-///
-class BlockFor : public BlockGraph {
-public:
-  bool hasOverflowSyntax(void) const { return ((getFlags() & f_whiledo_overflow)!=0); }	///< Does \b this require overflow syntax
-  void setOverflowSyntax(void) { setFlag(f_whiledo_overflow); }		///< Set that \b this requires overflow syntax
-  virtual block_type getType(void) const { return t_for; }
-  virtual void markLabelBumpUp(bool bump);
-  virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
-  virtual void emit(PrintLanguage *lng) const { lng->emitBlockFor(this); }
-  virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
 };
 
 /// \brief A loop structure where the condition is checked at the bottom.
