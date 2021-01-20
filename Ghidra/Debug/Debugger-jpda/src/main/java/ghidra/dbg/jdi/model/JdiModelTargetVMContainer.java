@@ -28,9 +28,15 @@ import ghidra.dbg.jdi.manager.JdiCause;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.target.TargetEventScope.TargetEventScopeListener;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "VMContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetVM.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 
@@ -164,12 +170,12 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 
 	public synchronized JdiModelTargetVM getTargetVM(VirtualMachine vm) {
 		return vmsById.computeIfAbsent(vm.name(),
-			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i)));
+			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i), true));
 	}
 
 	public synchronized JdiModelTargetVM getTargetVMByName(String name) {
 		return vmsById.computeIfAbsent(name,
-			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i)));
+			i -> new JdiModelTargetVM(this, impl.getManager().getKnownVMs().get(i), true));
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

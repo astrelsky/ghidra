@@ -23,7 +23,13 @@ import com.sun.jdi.Value;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "TargetValueMap", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = JdiModelTargetValue.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetValueMap extends JdiModelTargetObjectImpl {
 
 	private Map<LocalVariable, Value> values;
@@ -62,7 +68,8 @@ public class JdiModelTargetValueMap extends JdiModelTargetObjectImpl {
 	}
 
 	protected synchronized JdiModelTargetValue getTargetValue(LocalVariable var, Value val) {
-		return valuesByVariable.computeIfAbsent(var, n -> new JdiModelTargetValue(this, val));
+		return valuesByVariable.computeIfAbsent(var,
+			n -> new JdiModelTargetValue(this, val, false));
 	}
 
 	public synchronized JdiModelTargetValue getTargetValueIfPresent(LocalVariable var) {

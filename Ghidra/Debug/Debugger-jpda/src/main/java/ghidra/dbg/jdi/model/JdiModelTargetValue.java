@@ -15,21 +15,29 @@
  */
 package ghidra.dbg.jdi.model;
 
-import com.sun.jdi.*;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "Value", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetValue extends JdiModelTargetObjectImpl {
 
 	protected final Value value;
 	protected final Type type;
 
-	public JdiModelTargetValue(JdiModelTargetObject object, Value value) {
-		this(object, value.toString(), value);
+	public JdiModelTargetValue(JdiModelTargetObject object, Value value, boolean isElement) {
+		this(object, value.toString(), value, isElement);
 	}
 
-	public JdiModelTargetValue(JdiModelTargetObject object, String id, Value value) {
-		super(object, id, value);
+	public JdiModelTargetValue(JdiModelTargetObject object, String id, Value value,
+			boolean isElement) {
+		super(object, id, value, isElement);
 		this.value = value;
 		this.type = value.type();
 	}

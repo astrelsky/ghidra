@@ -24,9 +24,15 @@ import com.sun.jdi.ThreadGroupReference;
 
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "ThreadGroupContainer", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = JdiModelTargetThreadGroupContainer.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 
@@ -45,8 +51,8 @@ public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 	}
 
 	public JdiModelTargetThreadGroupContainer(JdiModelTargetObject parent,
-			ThreadGroupReference group) {
-		super(parent, keyGroup(group));
+			ThreadGroupReference group, boolean isElement) {
+		super(parent, isElement ? keyGroup(group) : group.name());
 		this.baseGroup = group;
 	}
 
@@ -83,7 +89,7 @@ public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 	public synchronized JdiModelTargetThreadGroupContainer getTargetThreadGroup(
 			ThreadGroupReference group) {
 		return threadGroupsById.computeIfAbsent(group.name(),
-			i -> new JdiModelTargetThreadGroupContainer(this, group));
+			i -> new JdiModelTargetThreadGroupContainer(this, group, true));
 	}
 
 }

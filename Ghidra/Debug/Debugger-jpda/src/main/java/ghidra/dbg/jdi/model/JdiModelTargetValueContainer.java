@@ -23,7 +23,13 @@ import com.sun.jdi.Value;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "TargetValueContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetValue.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetValueContainer extends JdiModelTargetObjectImpl {
 
 	private List<Value> values;
@@ -68,7 +74,7 @@ public class JdiModelTargetValueContainer extends JdiModelTargetObjectImpl {
 
 	protected synchronized JdiModelTargetValue getTargetValue(Value val) {
 		return valuesByName.computeIfAbsent(val.toString(),
-			n -> new JdiModelTargetValue(this, val));
+			n -> new JdiModelTargetValue(this, val, true));
 	}
 
 	public synchronized JdiModelTargetValue getTargetValueIfPresent(String name) {

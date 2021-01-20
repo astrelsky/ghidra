@@ -30,9 +30,15 @@ import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface1.JdiModelSelectableObject;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetFocusScope;
 import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "StackFrame", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl
 		implements TargetStackFrame<JdiModelTargetStackFrame>, //
 		//TargetRegisterBank<JdiModelTargetStackFrame>, //
@@ -58,13 +64,13 @@ public class JdiModelTargetStackFrame extends JdiModelTargetObjectImpl
 	protected long level;
 
 	public JdiModelTargetStackFrame(JdiModelTargetStack stack, JdiModelTargetThread thread,
-			int level, StackFrame frame) {
-		super(stack, getUniqueId(level), frame);
+			int level, StackFrame frame, boolean isElement) {
+		super(stack, getUniqueId(level), frame, isElement);
 		this.thread = thread;
 		this.level = level;
 		this.frame = frame;
 
-		this.location = new JdiModelTargetLocation(this, frame.location());
+		this.location = new JdiModelTargetLocation(this, frame.location(), false);
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), // 

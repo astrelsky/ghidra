@@ -26,9 +26,16 @@ import ghidra.dbg.jdi.model.iface1.JdiModelTargetConsole;
 import ghidra.dbg.target.TargetConsole;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetInterpreter.TargetInterpreterListener;
+import ghidra.dbg.target.schema.*;
 import ghidra.lifecycle.Internal;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "Process", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "state", type = TargetExecutionState.class, hidden = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetProcess extends JdiModelTargetObjectImpl implements //
 		JdiModelTargetConsole<JdiModelTargetProcess>, //
 		JdiConsoleOutputListener, //
@@ -38,7 +45,7 @@ public class JdiModelTargetProcess extends JdiModelTargetObjectImpl implements /
 		return Long.toHexString(obj.pid());
 	}
 
-	String STATE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "state";
+	static String STATE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "state";
 
 	protected final Process process;
 
@@ -46,8 +53,8 @@ public class JdiModelTargetProcess extends JdiModelTargetObjectImpl implements /
 	private Thread input;
 	private Thread error;
 
-	public JdiModelTargetProcess(JdiModelTargetVM vm, Process process) {
-		super(vm, getUniqueId(process), process);
+	public JdiModelTargetProcess(JdiModelTargetVM vm, Process process, boolean isElement) {
+		super(vm, getUniqueId(process), process, isElement);
 		this.process = process;
 
 		//writer = new PrintWriter(process.getOutputStream());

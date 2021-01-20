@@ -22,9 +22,15 @@ import com.sun.jdi.Method;
 
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.TargetMemory;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 
+@TargetObjectSchemaInfo(name = "TargetSectionContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetSection.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 		implements TargetMemory<JdiModelTargetSectionContainer> {
 
@@ -48,7 +54,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 	@Override
 	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
 
-		constantPool = new JdiModelTargetConstantPool(this, reftype.reftype.constantPool());
+		constantPool = new JdiModelTargetConstantPool(this, reftype.reftype.constantPool(), false);
 		changeAttributes(List.of(), List.of( //
 			constantPool //
 		), Map.of(), "Initialized");
@@ -64,7 +70,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 
 	protected synchronized JdiModelTargetSection getTargetSection(Method method) {
 		return sectionsByName.computeIfAbsent(JdiModelImpl.methodToKey(method),
-			n -> new JdiModelTargetSection(this, method));
+			n -> new JdiModelTargetSection(this, method, true));
 	}
 
 	public synchronized JdiModelTargetSection getTargetSectionIfPresent(String name) {

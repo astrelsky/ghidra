@@ -21,6 +21,17 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.LocalVariable;
 
+import ghidra.dbg.target.schema.*;
+
+@TargetObjectSchemaInfo(name = "LocalVariable", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(name = "Generic Signature", type = String.class), //
+	@TargetAttributeType(name = "Signature", type = String.class), //
+	@TargetAttributeType(name = "Type", type = String.class, required = true), //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 
 	String IS_ARGUMENT_ATTRIBUTE_NAME = "IsArg";
@@ -30,8 +41,8 @@ public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 	private JdiModelTargetAttributesContainer addedAttributes;
 
 	public JdiModelTargetLocalVariable(JdiModelTargetLocalVariableContainer variables,
-			LocalVariable var) {
-		super(variables, var.name(), var);
+			LocalVariable var, boolean isElement) {
+		super(variables, var.name(), var, isElement);
 		this.var = var;
 
 		changeAttributes(List.of(), List.of(), Map.of( //

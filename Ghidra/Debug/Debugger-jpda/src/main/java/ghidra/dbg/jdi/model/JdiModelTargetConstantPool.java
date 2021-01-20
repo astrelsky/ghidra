@@ -21,8 +21,14 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
+@TargetObjectSchemaInfo(name = "ConstantPool", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl implements //
 		//TargetMemory<JdiModelTargetSection>,  
 		TargetMemoryRegion<JdiModelTargetConstantPool>, TargetSection<JdiModelTargetConstantPool> {
@@ -30,8 +36,9 @@ public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl impleme
 	private AddressRange range;
 	private byte[] pool;
 
-	public JdiModelTargetConstantPool(JdiModelTargetSectionContainer parent, byte[] pool) {
-		super(parent, "Constant Pool", pool);
+	public JdiModelTargetConstantPool(JdiModelTargetSectionContainer parent, byte[] pool,
+			boolean isElement) {
+		super(parent, "Constant Pool", pool, isElement);
 		this.pool = pool;
 
 		this.range = impl.getAddressRange(getClassType(), pool.length);
@@ -40,7 +47,8 @@ public class JdiModelTargetConstantPool extends JdiModelTargetObjectImpl impleme
 			DISPLAY_ATTRIBUTE_NAME, getDisplay(), //
 			MODULE_ATTRIBUTE_NAME, parent.getClassType(), //
 			READABLE_ATTRIBUTE_NAME, true, //
-			MEMORY_ATTRIBUTE_NAME, parent, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range, //
+			MEMORY_ATTRIBUTE_NAME, parent, //
+			TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, range, //
 			UPDATE_MODE_ATTRIBUTE_NAME, TargetUpdateMode.FIXED //
 		), "Initialized");
 	}

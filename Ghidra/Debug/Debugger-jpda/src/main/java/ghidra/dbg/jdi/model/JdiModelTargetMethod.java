@@ -21,7 +21,14 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.*;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "Method", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 
 	protected final Method method;
@@ -34,8 +41,8 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 	private JdiModelTargetLocalVariableContainer variables;
 	private JdiModelTargetType returnType;
 
-	public JdiModelTargetMethod(JdiModelTargetObject parent, Method method) {
-		super(parent, method.toString(), method);
+	public JdiModelTargetMethod(JdiModelTargetObject parent, Method method, boolean isElement) {
+		super(parent, method.toString(), method, isElement);
 		this.method = method;
 
 		changeAttributes(List.of(), List.of(), Map.of( //
@@ -86,7 +93,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 		), "Initialized");
 
 		this.location = method.location() == null ? null
-				: new JdiModelTargetLocation(parent, method.location());
+				: new JdiModelTargetLocation(parent, method.location(), false);
 		if (location != null) {
 			changeAttributes(List.of(), List.of( //
 				location //		

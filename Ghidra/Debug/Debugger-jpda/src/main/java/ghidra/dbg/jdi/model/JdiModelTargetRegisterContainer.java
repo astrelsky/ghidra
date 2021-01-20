@@ -23,8 +23,14 @@ import com.sun.jdi.Location;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
+@TargetObjectSchemaInfo(name = "TargetRegisterContainer", elements = { //
+	@TargetElementType(type = JdiModelTargetRegister.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 		implements TargetRegisterBank<JdiModelTargetRegisterContainer>,
 		TargetRegisterContainer<JdiModelTargetRegisterContainer> {
@@ -39,25 +45,27 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 	public JdiModelTargetRegisterContainer(JdiModelTargetThread thread) {
 		super(thread, "Registers");
 		this.thread = thread;
-		this.pc = new JdiModelTargetRegister(this, "PC");
-		this.sp = new JdiModelTargetRegister(this, "SP");
-		this.retAddr = new JdiModelTargetRegister(this, "return_address");
+		this.pc = new JdiModelTargetRegister(this, "PC", true);
+		this.sp = new JdiModelTargetRegister(this, "SP", true);
+		this.retAddr = new JdiModelTargetRegister(this, "return_address", true);
 		registersByName.put(pc.getName(), pc);
 		registersByName.put(sp.getName(), sp);
 		registersByName.put(retAddr.getName(), retAddr);
-		changeAttributes(List.of(), List.of( //
+		changeElements(List.of(), List.of( //
 			pc, //
 			sp, //
 			retAddr //
-		), Map.of( //
+		), "Initialized");
+		changeAttributes(List.of(), List.of(), Map.of( //
 			DISPLAY_ATTRIBUTE_NAME, getName(), //
 			DESCRIPTIONS_ATTRIBUTE_NAME, this //
 		), "Initialized");
 	}
 
+	/*
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
-
+	
 		changeAttributes(List.of(), List.of( //
 			pc, //
 			sp, //
@@ -66,12 +74,14 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 			DISPLAY_ATTRIBUTE_NAME, getName(), //
 			DESCRIPTIONS_ATTRIBUTE_NAME, this //
 		), "Initialized");
-
+	
 		return CompletableFuture.completedFuture(null);
 	}
+	*/
 
 	protected synchronized JdiModelTargetRegister getTargetRegister(String rname) {
-		return registersByName.computeIfAbsent(rname, n -> new JdiModelTargetRegister(this, rname));
+		return registersByName.computeIfAbsent(rname,
+			n -> new JdiModelTargetRegister(this, rname, true));
 	}
 
 	public synchronized JdiModelTargetRegister getTargetMethodIfPresent(String rname) {

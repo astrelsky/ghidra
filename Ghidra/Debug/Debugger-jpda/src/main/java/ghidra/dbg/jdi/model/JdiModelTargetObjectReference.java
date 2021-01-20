@@ -22,7 +22,14 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.*;
 
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
+import ghidra.dbg.target.schema.*;
 
+@TargetObjectSchemaInfo(name = "ObjectReference", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "UID", type = Long.class, required = true, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
+})
 public class JdiModelTargetObjectReference extends JdiModelTargetValue {
 
 	private static final long MAX_REFERRERS = 100;
@@ -32,13 +39,14 @@ public class JdiModelTargetObjectReference extends JdiModelTargetValue {
 	protected JdiModelTargetThread owner;
 	private JdiModelTargetReferenceType referenceType;
 
-	public JdiModelTargetObjectReference(JdiModelTargetObject object, ObjectReference objref) {
-		this(object, Long.toHexString(objref.uniqueID()), objref);
+	public JdiModelTargetObjectReference(JdiModelTargetObject object, ObjectReference objref,
+			boolean isElement) {
+		this(object, Long.toString(objref.uniqueID()), objref, isElement);
 	}
 
 	public JdiModelTargetObjectReference(JdiModelTargetObject object, String id,
-			ObjectReference objref) {
-		super(object, id, objref);
+			ObjectReference objref, boolean isElement) {
+		super(object, id, objref, isElement);
 		this.objref = objref;
 
 		changeAttributes(List.of(), List.of(), Map.of( //

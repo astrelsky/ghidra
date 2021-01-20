@@ -23,8 +23,14 @@ import com.sun.jdi.Method;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
+import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.AddressRange;
 
+@TargetObjectSchemaInfo(name = "Section", elements = { //
+	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+})
 public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements //
 		//TargetMemory<JdiModelTargetSection>,  
 		TargetMemoryRegion<JdiModelTargetSection>, TargetSection<JdiModelTargetSection> {
@@ -32,8 +38,9 @@ public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements /
 	protected final Method method;
 	private AddressRange range;
 
-	public JdiModelTargetSection(JdiModelTargetSectionContainer parent, Method method) {
-		super(parent, method.toString(), method);
+	public JdiModelTargetSection(JdiModelTargetSectionContainer parent, Method method,
+			boolean isElement) {
+		super(parent, method.toString(), method, isElement);
 		this.method = method;
 
 		this.range = impl.getAddressRange(method);

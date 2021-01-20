@@ -35,6 +35,8 @@ import ghidra.dbg.jdi.model.iface1.*;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.lifecycle.Internal;
 
 /**
@@ -43,6 +45,17 @@ import ghidra.lifecycle.Internal;
  * TODO: Implementing {@link TargetLauncher} here doesn't seem right. While it's convenient from a
  * UI perspective, it doesn't make sense semantically.
  */
+@TargetObjectSchemaInfo(name = "VM", elements = { //
+//	@TargetElementType(type = Void.class) //
+}, attributes = { //
+	@TargetAttributeType(name = "Attributes", type = JdiModelTargetAttributesContainer.class), //
+	@TargetAttributeType(name = "Breakpoints", type = JdiModelTargetBreakpointContainer.class, fixed = true), //
+	@TargetAttributeType(name = "Classes", type = JdiModelTargetClassContainer.class, fixed = true), //
+	@TargetAttributeType(name = "Modules", type = JdiModelTargetModuleContainer.class, fixed = true), //
+	@TargetAttributeType(name = "Threads", type = JdiModelTargetThreadContainer.class, required = true, fixed = true), //
+	@TargetAttributeType(name = "ThreadGroups", type = JdiModelTargetThreadGroupContainer.class, fixed = true), //
+	@TargetAttributeType(type = Object.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		TargetProcess<JdiModelTargetVM>, //
 		TargetAggregate, //
@@ -57,7 +70,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 		JdiEventsListenerAdapter, //
 		JdiModelSelectableObject {
 
-	public static final String PID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "pid";
+	public static final String ID_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "id";
 	public static final String EXIT_CODE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "exit_code";
 
 	protected final VirtualMachine vm;
@@ -82,8 +95,8 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	private final MonitorContendedEnterRequest monitorEnterRequest;
 	private final MonitorContendedEnteredRequest monitorEnteredRequest;
 
-	public JdiModelTargetVM(JdiModelTargetVMContainer vms, VirtualMachine vm) {
-		super(vms, vm.name(), vm);
+	public JdiModelTargetVM(JdiModelTargetVMContainer vms, VirtualMachine vm, boolean isElement) {
+		super(vms, vm.name(), vm, isElement);
 		vms.vmsById.put(vm.name(), this);
 		this.vm = vm;
 		this.eventManager = vm.eventRequestManager();
@@ -115,7 +128,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 
 		Process proc = vm.process();
 		if (proc != null) {
-			this.process = new JdiModelTargetProcess(this, proc);
+			this.process = new JdiModelTargetProcess(this, proc, false);
 		}
 		else {
 			this.process = null;
@@ -256,7 +269,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 			if (id != null) {
 				changeAttributes(List.of(), List.of(), Map.of( //
 					STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE, //
-					PID_ATTRIBUTE_NAME, id, //
+					ID_ATTRIBUTE_NAME, id, //
 					DISPLAY_ATTRIBUTE_NAME, updateDisplay() //
 				), "Started");
 			}

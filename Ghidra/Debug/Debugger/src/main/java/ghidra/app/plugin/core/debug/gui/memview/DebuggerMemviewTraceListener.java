@@ -43,13 +43,13 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	Trace currentTrace;
 	TraceRecorder currentRecorder;
 
-	private boolean trackTrace = true;
+	private boolean trackTrace = false;
 	private boolean trackThreads = true;
 	private boolean trackRegions = true;
 	private boolean trackModules = true;
 	private boolean trackSections = true;
 	private boolean trackBreakpoints = true;
-	private boolean trackBytes = true;
+	private boolean trackBytes = false;
 
 	private final AsyncDebouncer<Void> updateLabelDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
@@ -210,6 +210,9 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 					processTrace(trace);
 				}
 			});
+		}
+		else {
+			provider.reset();
 		}
 	}
 

@@ -22,9 +22,15 @@ import com.sun.jdi.*;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetStack;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
+@TargetObjectSchemaInfo(name = "Stack", elements = { //
+	@TargetElementType(type = JdiModelTargetStackFrame.class) //
+}, attributes = { //
+	@TargetAttributeType(type = Void.class) //
+}, canonicalContainer = true)
 public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 		implements TargetStack<JdiModelTargetStack> {
 
@@ -62,7 +68,7 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 		return framesByLocation.compute(frame.location(), (l, f) -> {
 			if (f == null || f.getFrameLevel() != level) {
 				JdiModelTargetStackFrame tf =
-					new JdiModelTargetStackFrame(this, thread, level, frame);
+					new JdiModelTargetStackFrame(this, thread, level, frame, true);
 				framesByLevel.put(level, tf);
 				return tf;
 			}
