@@ -134,7 +134,7 @@ public class PcodeParser extends PcodeCompile {
 	@Override
 	public long allocateTemp() {
 		long base = tempbase;
-		tempbase = base + 16; // Should be maximum size of a unique
+		tempbase = base + SleighBase.MAX_UNIQUE_SIZE;
 		return base;
 	}
 
