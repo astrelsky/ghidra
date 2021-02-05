@@ -113,7 +113,7 @@ public interface GraphDisplay {
 	 * @param monospace true if the font should be monospaced
 	 * @param maxLines the maximum number lines to display in the vertex labels
 	 */
-	public void setVertexLabel(String attributeName, int alignment, int size, boolean monospace,
+	public void setVertexLabelAttribute(String attributeName, int alignment, int size, boolean monospace,
 			int maxLines);
 
 	/**
@@ -152,5 +152,4 @@ public interface GraphDisplay {
 	 * @param action the action to add.
 	 */
 	public void addAction(DockingAction action);
-
 }
