@@ -61,32 +61,32 @@ ext.ghidraPath = files()
 /********************************************************************************
  * Local Methods
  *********************************************************************************/
- 
-/** 
+
+/**
  * Returns the git commit version of the given git repository. If the
  * path is invalid (doesn't exist or isn't in a git repository), an empty
  * string will be returned.
  */
-def getGitRev(repoPath) { 
-        
+def getGitRev(repoPath) {
+
    println("getting git commit for $repoPath")
-   
+
    // If the path doesn't exist, the exec command will fail before it can
    // even run the 'git' command, so short-circuit the whole thing here.
    if (!new File(repoPath).exists()) {
       return ""
    }
-   
+
    // Check to see if the given repo is a git repository. No need to exec
    // if it isn't.
    if (!new File(repoPath + "/.git").exists()) {
       return ""
    }
-          
+
    // Exec the git command to get the commit hash. Note the try/catch - this is
-   // necessary to catch catastrophic errors on the exec command (eg: 
-   // if the git command is not available). This is necessary because the 
-   // 'ignoreExitValue' attribute only applies to the return value of the 
+   // necessary to catch catastrophic errors on the exec command (eg:
+   // if the git command is not available). This is necessary because the
+   // 'ignoreExitValue' attribute only applies to the return value of the
    // command being executed (eg: git); it doesn't apply to the return value of
    // the exec command itself.
    def stdout = new ByteArrayOutputStream()
@@ -101,7 +101,7 @@ def getGitRev(repoPath) {
    catch (Exception e) {
       println("ERROR: gradle exec failed to run 'git rev-parse': is git installed on this system?")
    }
-      
+
    // Return the commit hash
    println(stdout)
    return stdout.toString().trim()
@@ -138,6 +138,8 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 
 	// generate documentation using html5
 	options.addBooleanOption("html5", true)
+
+	options.addBooleanOption('Xdoclint:none', true)
 
 	def extdocURL = ('https://docs.oracle.com/en/java/javase/'
 				    +JavaVersion.current().getMajorVersion()
@@ -205,7 +207,7 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Newer versions of gradle set this to true by default.
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)
-	
+
 	options.setDocTitle(null)
 
 	// Some internal packages are not public and need to be exported.
@@ -270,7 +272,7 @@ task assembleDistribution (type: Copy) {
 	exclude "**/.vs/**"
 	exclude "**/*.vcxproj.user"
 	exclude "**/.settings/**"
-		
+
 	/////////////////////////////
 	// COPY all GPL support files
 	// (modules with build.gradle handled separately)
@@ -324,18 +326,18 @@ task assembleDistribution (type: Copy) {
 		def gitRevFile = file("$buildDir/git-rev.properties")
 		doFirst {
 			file("$buildDir").mkdirs()
-				
+
 			// Get the build dates and add to the build file
 			buildDateFile.text = ""
 			if (rootProject.BUILD_DATES_NEEDED) {
 				buildDateFile.text += "application.build.date=" + rootProject.BUILD_DATE + "\n"
 				buildDateFile.text += "application.build.date.short=" + rootProject.BUILD_DATE_SHORT + "\n"
 			}
-				
+
 			// Get the git revisions and add to the git file
 			gitRevFile.text = ""
 			if (rootProject.GIT_REVS_NEEDED) {
-				ALL_REPOS.each { 
+				ALL_REPOS.each {
 					def rev = getGitRev(ROOT_PROJECT_DIR + "/../${it}")
 					gitRevFile.text += "application.revision.${it}=" + "$rev" + "\n"
 				}
@@ -346,12 +348,12 @@ task assembleDistribution (type: Copy) {
 			delete gitRevFile
 		}
 		into "Ghidra"
-			
+
 		// Add the build and git info to the application.properties file
 		filter (ConcatFilter, prepend: buildDateFile)
 		filter (ConcatFilter, prepend: gitRevFile)
 	}
-	
+
 	/////////////////
 	// JAVADOCS
 	/////////////////
