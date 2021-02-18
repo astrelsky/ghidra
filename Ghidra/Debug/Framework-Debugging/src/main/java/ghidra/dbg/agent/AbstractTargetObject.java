@@ -55,11 +55,11 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 
 	protected boolean valid = true;
 
-	protected final ListenerSet<TargetObjectListener> listeners =
-		new ListenerSet<>(TargetObjectListener.class);
+	protected final ListenerSet<TargetObjectListener> listeners;
 
 	public AbstractTargetObject(DebuggerObjectModel model, P parent, String key, String typeHint,
 			TargetObjectSchema schema) {
+		this.listeners = new ListenerSet<>(TargetObjectListener.class, model.getClientExecutor());
 		this.model = model;
 		this.parent = parent;
 		this.completedParent = CompletableFuture.completedFuture(parent);
@@ -73,9 +73,6 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 		this.typeHint = typeHint;
 
 		this.schema = schema;
-		if (schema != null) {
-			schema.validateTypeAndInterfaces(getProxy(), null, enforcesStrictSchema());
-		}
 	}
 
 	/**
@@ -106,12 +103,12 @@ public abstract class AbstractTargetObject<P extends TargetObject>
 	 * there is no guarantee of consistency after an exception is thrown. In general, models without
 	 * explicit schemas should not fail validation, since objects will likely be assigned
 	 * {@link EnumerableTargetObjectSchema#ANY}. When developing a schema for an existing model, it
-	 * may be useful to override this to return false in the interim.
+	 * may be useful to override this to return true to fail fast.
 	 * 
 	 * @return true to throw exceptions on schema violations.
 	 */
 	protected boolean enforcesStrictSchema() {
-		return true;
+		return false;
 	}
 
 	@Override

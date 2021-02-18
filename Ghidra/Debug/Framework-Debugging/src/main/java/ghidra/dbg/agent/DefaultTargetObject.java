@@ -163,7 +163,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			}
 			req = curElemsRequest;
 		}
-		return req.thenApply(__ -> getCachedElements());
+		return req.thenApply(__ -> getCachedElements()).thenCompose(model::gateFuture);
 	}
 
 	@Override
@@ -239,7 +239,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
@@ -284,7 +284,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateElementDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateElementDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateElements(delta.removed.values(), reason);
 		if (!delta.isEmpty()) {
@@ -330,7 +330,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 			}
 			req = curAttrsRequest;
 		}
-		return req.thenApply(__ -> getCachedAttributes());
+		return req.thenApply(__ -> {
+			synchronized (attributes) {
+				if (schema != null) { // TODO: Remove this. Schema should never be null.
+					schema.validateRequiredAttributes(this, enforcesStrictSchema());
+				}
+				return getCachedAttributes();
+			}
+		}).thenCompose(model::gateFuture);
 	}
 
 	@Override
@@ -403,7 +410,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {
@@ -448,7 +455,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 		}
 		TargetObjectSchema schemax = getSchema();
 		if (schemax != null) {
-			schemax.validateAttributeDelta(getProxy(), delta, enforcesStrictSchema());
+			schemax.validateAttributeDelta(getPath(), delta, enforcesStrictSchema());
 		}
 		doInvalidateAttributes(delta.removed, reason);
 		if (!delta.isEmpty()) {

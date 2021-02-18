@@ -13,26 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.async;
+package agent.dbgmodel.model.impl;
 
-import java.util.concurrent.*;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
 
-import ghidra.util.SystemUtilities;
+public interface DbgModel2TargetProxy extends DbgModelTargetObject {
 
-public interface AsyncTestUtils {
-	static final long TIMEOUT_MILLISECONDS =
-		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
+	public DelegateDbgModel2TargetObject getDelegate();
 
-	default <T> T waitOn(CompletableFuture<T> future) throws Throwable {
-		try {
-			return future.get(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-		}
-		catch (Exception e) {
-			throw AsyncUtils.unwrapThrowable(e);
-		}
-	}
-
-	default void waitOn(Executor executor) throws Throwable {
-		waitOn(CompletableFuture.supplyAsync(() -> null, executor));
-	}
 }
