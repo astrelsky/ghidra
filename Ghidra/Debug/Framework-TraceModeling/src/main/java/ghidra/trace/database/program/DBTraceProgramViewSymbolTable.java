@@ -29,6 +29,7 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.*;
+import ghidra.util.exception.AssertException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -574,5 +575,40 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	@Override
 	public Symbol createSymbolPlaceholder(Address address, long id) {
 		return new DBTracePlaceholderSymbol(symbolManager, id);
+	}
+
+	@Override
+	public Namespace getOrCreateNameSpace(Namespace parent, String name, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
+		Namespace ns = getNamespace(name, parent);
+		if (ns != null) {
+			return ns;
+		}
+		return createNameSpace(parent, name, source);
+	}
+
+	@Override
+	public GhidraClass convertNamespaceToClass(Namespace namespace) {
+		assertTraceNamespace(namespace);
+		if (namespace instanceof GhidraClass) {
+			return (GhidraClass) namespace;
+		}
+		Symbol ns = namespace.getSymbol();
+		String name = ns.getName();
+		String tmpName = name + System.nanoTime();
+		Namespace parent = namespace.getParentNamespace();
+		SourceType st = ns.getSource();
+		try {
+			GhidraClass gc = createClass(parent, tmpName, st);
+			for (Symbol s : getChildren(ns)) {
+				s.setNamespace(gc);
+			}
+
+			ns.delete();
+			gc.getSymbol().setName(name, st);
+			return gc;
+		} catch (DuplicateNameException | InvalidInputException | CircularDependencyException e) {
+			throw new AssertException("Unexpected exception creating class from namespace", e);
+		}
 	}
 }
